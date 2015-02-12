@@ -67,10 +67,10 @@ public:
     }
 
     template <typename T>
-    const T& value() const
+    const T& value() const throw (std::bad_cast)
     {
         if (!isType<T>())
-            throw std::runtime_error("<6888fd18> Invalid variant cast");
+            throw std::bad_cast();
         return std::static_pointer_cast<Holder<T>>(holder_)->value;
     }
 
@@ -164,7 +164,7 @@ private:
         // basic realization called if no equal operator defined
         static bool compare(const T&, const T&)
         {
-            throw std::runtime_error("<60cec730> \"==\" operator is not defined for this type");
+            throw std::runtime_error("\"==\" operator is not defined for this type");
         }
     };
 
@@ -199,7 +199,7 @@ private:
     struct IsLessThan {
         static bool compare(const T&, const T&)
         {
-            throw std::runtime_error("<55984e31> \"<\" operator is not defined for this type");
+            throw std::runtime_error("\"<\" operator is not defined for this type");
         }
     };
 
@@ -242,7 +242,7 @@ private:
         bool isLessThan(HolderBase* other) const override
         {
             if (::strcmp(name, other->name) != 0)
-                throw std::runtime_error("<a822a647> Incompatible types");
+                throw std::runtime_error("Incompatible types");
             return IsLessThan<T>::compare(value, static_cast<Holder<T>*>(other)->value);
         }
 
