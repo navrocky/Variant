@@ -22,6 +22,10 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #include <stdexcept>
 #include <cstring>
 
+#ifndef VARIANT_CAST_OPTIMIZATION
+#define VARIANT_CAST_OPTIMIZATION 0
+#endif
+
 /**
 
 \brief The boost::any analog.
@@ -63,7 +67,11 @@ public:
     template <typename T>
     bool isType() const
     {
+#if VARIANT_CAST_OPTIMIZATION
+        return typeid(T).name() == holder_->name;
+#else
         return ::strcmp(typeid(T).name(), holder_->name) == 0;
+#endif
     }
 
     template <typename T>
