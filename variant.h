@@ -226,6 +226,15 @@ private:
         virtual ~HolderBase() {}
         const char* name;
 
+        bool sameType(HolderBase* other) const
+        {
+#if VARIANT_CAST_OPTIMIZATION
+            return name == other->name;
+#else
+            return ::strcmp(name, other->name) == 0;
+#endif
+        }
+
         virtual bool isEquals(HolderBase* other) const = 0;
         virtual bool isLessThan(HolderBase* other) const = 0;
     };
@@ -242,14 +251,14 @@ private:
 
         bool isEquals(HolderBase* other) const override
         {
-            if (::strcmp(name, other->name) != 0)
+            if (!sameType(other))
                 return false;
             return IsEqual<T>::compare(value, static_cast<Holder<T>*>(other)->value);
         }
 
         bool isLessThan(HolderBase* other) const override
         {
-            if (::strcmp(name, other->name) != 0)
+            if (!sameType(other))
                 throw std::runtime_error("Incompatible types");
             return IsLessThan<T>::compare(value, static_cast<Holder<T>*>(other)->value);
         }
