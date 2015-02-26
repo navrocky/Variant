@@ -68,9 +68,9 @@ public:
     bool isType() const
     {
 #if VARIANT_CAST_OPTIMIZATION
-        return typeid(T).name() == holder_->name;
+        return holder_ ? typeid(T).name() == holder_->name : false;
 #else
-        return ::strcmp(typeid(T).name(), holder_->name) == 0;
+        return holder_ ? ::strcmp(typeid(T).name(), holder_->name) == 0 : false;
 #endif
     }
 

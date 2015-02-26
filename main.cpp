@@ -39,6 +39,18 @@ int main()
 
     {
         Variant a;
+        CHECK(a.isType<int>() == false);
+    }
+
+    {
+        Variant a;
+        exceptionExpected([&](){
+            CHECK(a.value<int>() == 0);
+        });
+    }
+
+    {
+        Variant a;
         CHECK(a.isEmpty());
         a = 10;
         CHECK(!a.isEmpty());
@@ -107,6 +119,13 @@ int main()
         exceptionExpected([&](){
             CHECK(a == b);
         });
+    }
+
+    {
+        Variant a = 10;
+        Variant b;
+        b = a;
+        CHECK(a == b);
     }
 
     return 0;
