@@ -44,9 +44,14 @@ int main()
 
     {
         Variant a;
-        exceptionExpected([&](){
-            CHECK(a.value<int>() == 0);
+        exceptionExpected([&](){;
+            CHECK(a.valueRef<int>() == 0);
         });
+    }
+
+    {
+        Variant a;
+        CHECK(a.value<int>() == 0);
     }
 
     {

@@ -75,7 +75,7 @@ public:
     }
 
     template <typename T>
-    const T& value() const throw (std::bad_cast)
+    const T& valueRef() const throw (std::bad_cast)
     {
         if (!isType<T>())
             throw std::bad_cast();
@@ -83,9 +83,18 @@ public:
     }
 
     template <typename T>
-    operator const T& () const
+    T value() const throw (std::bad_cast)
     {
-        return value<T>();
+        if (!holder_)
+            return T();
+        else
+            return valueRef<T>();
+    }
+
+    template <typename T>
+    operator T() const
+    {
+        return valueRef<T>();
     }
 
     template <typename T>
