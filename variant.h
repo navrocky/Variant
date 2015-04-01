@@ -21,10 +21,30 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #include <typeinfo>
 #include <stdexcept>
 #include <cstring>
+#include <type_traits>
 
 #ifndef VARIANT_CAST_OPTIMIZATION
 #define VARIANT_CAST_OPTIMIZATION 0
 #endif
+
+namespace VariantInternal
+{
+    typedef bool no[2];
+    template<typename T> static no& operator==(const T&, const T&);
+    template<typename T> static no& operator<(const T&, const T&);
+
+    template <typename T>
+    struct EqualOperatorExists
+    {
+        enum { value = (sizeof(*(T*)(0) == *(T*)(0)) != sizeof(no)) };
+    };
+
+    template <typename T>
+    struct LessOperatorExists
+    {
+        enum { value = (sizeof(*(T*)(0) < *(T*)(0)) != sizeof(no)) };
+    };
+}
 
 /**
 
@@ -75,7 +95,7 @@ public:
     }
 
     template <typename T>
-    const T& valueRef() const throw (std::bad_cast)
+    const T& valueRef() const
     {
         if (!isType<T>())
             throw std::bad_cast();
@@ -83,7 +103,7 @@ public:
     }
 
     template <typename T>
-    T value() const throw (std::bad_cast)
+    T value() const
     {
         if (!holder_)
             return T();
@@ -158,24 +178,6 @@ public:
     }
 
 private:
-    template <typename Type>
-    struct HasEqualOperator
-    {
-        typedef char yes[1];
-        typedef char no[2];
-
-        template <std::size_t N>
-        struct SFINAE {};
-
-        template <typename T>
-        static yes& isEqualComparable(SFINAE<sizeof(*static_cast<T*>(0) == *static_cast<T*>(0))>* = 0);
-
-        template <typename T>
-        static no& isEqualComparable(...);
-
-        static const bool value = sizeof(isEqualComparable<Type>(0)) == sizeof(yes);
-    };
-
     template<class T, class Enable = void>
     struct IsEqual {
         // basic realization called if no equal operator defined
@@ -186,30 +188,12 @@ private:
     };
 
     template<class T>
-    struct IsEqual<T, typename std::enable_if<HasEqualOperator<T>::value >::type> {
+    struct IsEqual<T, typename std::enable_if<VariantInternal::EqualOperatorExists<T>::value >::type> {
         // this realization called if equal operator defined
         static bool compare(const T& v1, const T& v2)
         {
             return v1 == v2;
         }
-    };
-
-    template <typename Type>
-    struct HasLessThanOperator
-    {
-        typedef char yes[1];
-        typedef char no[2];
-
-        template <std::size_t N>
-        struct SFINAE {};
-
-        template <typename T>
-        static yes& isComparable(SFINAE<sizeof(*static_cast<T*>(0) < *static_cast<T*>(0))>* = 0);
-
-        template <typename T>
-        static no& isComparable(...);
-
-        static const bool value = sizeof(isComparable<Type>(0)) == sizeof(yes);
     };
 
     template<class T, class Enable = void>
@@ -221,7 +205,7 @@ private:
     };
 
     template<class T>
-    struct IsLessThan<T, typename std::enable_if<HasLessThanOperator<T>::value >::type> {
+    struct IsLessThan<T, typename std::enable_if<VariantInternal::LessOperatorExists<T>::value >::type> {
         static bool compare(const T& v1, const T& v2)
         {
             return v1 < v2;

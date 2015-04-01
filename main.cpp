@@ -1,20 +1,27 @@
-#include <iostream>
-
 #include "variant.h"
+
+#include <iostream>
+#include <sstream>
+#include <functional>
 
 using namespace std;
 
-struct Foo {
+struct Foo
+{
     int field;
 };
 
-void check(bool v, const char* condition)
+void check(bool v, int line, const char* condition)
 {
     if (!v)
-        throw std::runtime_error(condition);
+    {
+        stringstream ss;
+        ss << "Error at line " << line << ": " << condition;
+        throw std::runtime_error(ss.str());
+    }
 }
 
-#define CHECK(cond) check(cond, #cond)
+#define CHECK(cond) check(cond, __LINE__, #cond)
 
 void exceptionExpected(std::function<void()> func)
 {
@@ -23,7 +30,7 @@ void exceptionExpected(std::function<void()> func)
     {
         func();
     }
-    catch (const exception& e)
+    catch (const exception&)
     {
         hasException = true;
     }
@@ -32,107 +39,119 @@ void exceptionExpected(std::function<void()> func)
 
 int main()
 {
+    try
     {
-        Variant a = 10;
-        CHECK(a.value<int>() == 10);
-    }
+        {
+            Variant a = 10;
+            CHECK(a.value<int>() == 10);
+        }
 
-    {
-        Variant a;
-        CHECK(a.isType<int>() == false);
-    }
+        {
+            Variant a;
+            CHECK(a.isType<int>() == false);
+        }
 
-    {
-        Variant a;
-        exceptionExpected([&](){;
-            CHECK(a.valueRef<int>() == 0);
-        });
-    }
+        {
+            Variant a;
+            exceptionExpected([&](){;
+                CHECK(a.valueRef<int>() == 0);
+            });
+        }
 
-    {
-        Variant a;
-        CHECK(a.value<int>() == 0);
-    }
+        {
+            Variant a;
+            CHECK(a.value<int>() == 0);
+        }
 
-    {
-        Variant a;
-        CHECK(a.isEmpty());
-        a = 10;
-        CHECK(!a.isEmpty());
-        a.clear();
-        CHECK(a.isEmpty());
-    }
+        {
+            Variant a;
+            CHECK(a.isEmpty());
+            a = 10;
+            CHECK(!a.isEmpty());
+            a.clear();
+            CHECK(a.isEmpty());
+        }
 
-    {
-        auto a = Variant::fromValue(10);
-        CHECK(a.value<int>() == 10);
-    }
+        {
+            auto a = Variant::fromValue(10);
+            CHECK(a.value<int>() == 10);
+        }
 
-    {
-        Variant a = 10;
-        Variant b(a);
-        CHECK(b.value<int>() == 10);
-    }
+        {
+            Variant a = 10;
+            Variant b(a);
+            CHECK(b.value<int>() == 10);
+        }
 
-    {
-        Variant a = 10;
-        Variant b;
-        b = a;
-        CHECK(b.value<int>() == 10);
-    }
+        {
+            Variant a = 10;
+            Variant b;
+            b = a;
+            CHECK(b.value<int>() == 10);
+        }
 
-    {
-        Variant a = 10;
-        CHECK(a.isType<float>() == false);
-    }
+        {
+            Variant a = 10;
+            CHECK(a.isType<float>() == false);
+        }
 
-    {
-        Variant a = 0;
-        Variant b = 10;
-        CHECK(a < b);
-        CHECK(b > a);
-        CHECK(b != a);
-        CHECK(!(b == a));
-    }
+        {
+            Variant a = 0;
+            Variant b = 10;
+            CHECK(a < b);
+            CHECK(b > a);
+            CHECK(b != a);
+            CHECK(!(b == a));
+        }
 
-    {
-        Variant a = 0;
-        CHECK(a > -1);
-        CHECK(a < 1);
-        CHECK(a == 0);
-        CHECK(a != 1);
-    }
+        {
+            Variant a = 0;
+            CHECK(a > -1);
+            CHECK(a < 1);
+            CHECK(a == Variant(0)); // VS2013 has a multiple overloads in this situation
+            CHECK(a != 1);
+        }
 
-    {
-        Variant a = Foo {10};
-        CHECK(a.value<Foo>().field == 10);
-    }
+        {
+            Variant a = Foo {10};
+            CHECK(a.value<Foo>().field == 10);
+        }
 
-    {
-        // we cannot check equality of types without equal operator
-        Variant a = Foo {10};
-        Variant b = Foo {20};
-        exceptionExpected([&](){
-            CHECK(a != b);
-        });
-    }
+        {
+            // we cannot check equality of types without equal operator
+            Variant a = Foo {10};
+            Variant b = Foo {20};
+            exceptionExpected([&](){
+                CHECK(a != b);
+            });
+        }
 
-    {
-        // we cannot compare incompatible types
-        Variant a = 10;
-        Variant b = 10.0;
-        exceptionExpected([&](){
+        {
+            // we cannot compare incompatible types
+            Variant a = 10;
+            Variant b = 10.0;
+            exceptionExpected([&](){
+                CHECK(a == b);
+            });
+        }
+
+        {
+            Variant a = 10;
+            Variant b;
+            b = a;
             CHECK(a == b);
-        });
+        }
     }
-
+    catch (const std::exception& e)
     {
-        Variant a = 10;
-        Variant b;
-        b = a;
-        CHECK(a == b);
+        cerr << e.what() << endl;
+        return 1;
     }
-
+    catch (...)
+    {
+        cerr << "Unknown exception" << endl;
+        return 1;
+    }
+    cout << "All tests completed successfully" << endl;
     return 0;
 }
-
