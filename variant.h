@@ -30,20 +30,21 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 namespace VariantInternal
 {
 
-typedef bool no[2];
-template<typename T, typename R> static no& operator==(const T&, const R&);
-template<typename T, typename R> static no& operator<(const T&, const R&);
+struct NoOperator {};
+
+template<typename T, typename R> NoOperator operator==(T, R);
+template<typename T, typename R> NoOperator operator<(T, R);
 
 template <typename T>
-struct EqualOperatorExists
+struct IsEqualOperatorExists
 {
-    enum { value = (sizeof(*(T*)(0) == *(T*)(0)) != sizeof(no)) };
+    static const bool value = !std::is_same<NoOperator, decltype(*static_cast<T*>(0) == *static_cast<T*>(0))>::value;
 };
 
 template <typename T>
-struct LessOperatorExists
+struct IsLessOperatorExists
 {
-    enum { value = (sizeof(*(T*)(0) < *(T*)(0)) != sizeof(no)) };
+    static const bool value = !std::is_same<NoOperator, decltype(*static_cast<T*>(0) < *static_cast<T*>(0))>::value;
 };
 
 }
@@ -190,7 +191,7 @@ private:
     };
 
     template<class T>
-    struct IsEqual<T, typename std::enable_if<VariantInternal::EqualOperatorExists<T>::value >::type> {
+    struct IsEqual<T, typename std::enable_if<VariantInternal::IsEqualOperatorExists<T>::value >::type> {
         // this realization called if equal operator defined
         static bool compare(const T& v1, const T& v2)
         {
@@ -207,7 +208,7 @@ private:
     };
 
     template<class T>
-    struct IsLessThan<T, typename std::enable_if<VariantInternal::LessOperatorExists<T>::value >::type> {
+    struct IsLessThan<T, typename std::enable_if<VariantInternal::IsLessOperatorExists<T>::value >::type> {
         static bool compare(const T& v1, const T& v2)
         {
             return v1 < v2;
