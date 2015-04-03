@@ -29,21 +29,23 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 namespace VariantInternal
 {
-    typedef bool no[2];
-    template<typename T> static no& operator==(const T&, const T&);
-    template<typename T> static no& operator<(const T&, const T&);
 
-    template <typename T>
-    struct EqualOperatorExists
-    {
-        enum { value = (sizeof(*(T*)(0) == *(T*)(0)) != sizeof(no)) };
-    };
+typedef bool no[2];
+template<typename T, typename R> static no& operator==(const T&, const R&);
+template<typename T, typename R> static no& operator<(const T&, const R&);
 
-    template <typename T>
-    struct LessOperatorExists
-    {
-        enum { value = (sizeof(*(T*)(0) < *(T*)(0)) != sizeof(no)) };
-    };
+template <typename T>
+struct EqualOperatorExists
+{
+    enum { value = (sizeof(*(T*)(0) == *(T*)(0)) != sizeof(no)) };
+};
+
+template <typename T>
+struct LessOperatorExists
+{
+    enum { value = (sizeof(*(T*)(0) < *(T*)(0)) != sizeof(no)) };
+};
+
 }
 
 /**

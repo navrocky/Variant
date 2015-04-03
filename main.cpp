@@ -121,8 +121,26 @@ int main()
             // we cannot check equality of types without equal operator
             Variant a = Foo {10};
             Variant b = Foo {20};
+
+            exceptionExpected([&](){
+                CHECK(a == b);
+            });
+
             exceptionExpected([&](){
                 CHECK(a != b);
+            });
+        }
+
+        {
+            // we cannot compare types without "less than" operator
+            Variant a = Foo {10};
+            Variant b = Foo {20};
+            exceptionExpected([&](){
+                CHECK(a < b);
+            });
+
+            exceptionExpected([&](){
+                CHECK(a > b);
             });
         }
 
@@ -140,6 +158,14 @@ int main()
             Variant b;
             b = a;
             CHECK(a == b);
+        }
+
+        {
+            Variant a = std::shared_ptr<int>();
+            Variant b = std::shared_ptr<int>();
+            b = a;
+            CHECK(a == b);
+            CHECK(!(a < b));
         }
     }
     catch (const std::exception& e)
