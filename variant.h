@@ -137,6 +137,8 @@ public:
     {
         if (!isType<T>())
             return false;
+        if (!holder_.unique())
+            holder_ = std::make_shared<Holder<T>>(typeid(T).name(), std::static_pointer_cast<Holder<T>>(holder_)->value);
         val = &(std::static_pointer_cast<Holder<T>>(holder_)->value);
         return true;
     }
